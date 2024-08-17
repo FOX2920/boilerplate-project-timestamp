@@ -1,32 +1,45 @@
-// index.js
-// where your node app starts
+const express = require('express');
+const cors = require('cors');
+const app = express();
 
-// init project
-var express = require('express');
-var app = express();
+// Enable CORS so that the API is remotely testable
+app.use(cors({ optionsSuccessStatus: 200 }));
 
-// enable CORS (https://en.wikipedia.org/wiki/Cross-origin_resource_sharing)
-// so that your API is remotely testable by FCC 
-var cors = require('cors');
-app.use(cors({optionsSuccessStatus: 200}));  // some legacy browsers choke on 204
-
-// http://expressjs.com/en/starter/static-files.html
+// Serve static files
 app.use(express.static('public'));
 
-// http://expressjs.com/en/starter/basic-routing.html
-app.get("/", function (req, res) {
+// Serve the index.html file
+app.get("/", (req, res) => {
   res.sendFile(__dirname + '/views/index.html');
 });
 
+// API endpoint for the timestamp microservice
+app.get("/api/:date?", (req, res) => {
+  let dateParam = req.params.date;
+  let date;
 
-// your first API endpoint... 
-app.get("/api/hello", function (req, res) {
-  res.json({greeting: 'hello API'});
+  if (!dateParam) {
+    date = new Date();
+  } else {
+    if (!isNaN(dateParam)) {
+      dateParam = parseInt(dateParam);
+    }
+    date = new Date(dateParam);
+  }
+
+  if (date.toString() === "Invalid Date") {
+    res.json({ error: "Invalid Date" });
+  } else {
+    res.setHeader('Content-Type', 'application/json');
+    res.send(JSON.stringify({
+      unix: date.getTime(),
+      utc: date.toUTCString()
+    }, null, 2)); 
+  }
 });
 
 
-
 // Listen on port set in environment variable or default to 3000
-var listener = app.listen(process.env.PORT || 3000, function () {
+const listener = app.listen(process.env.PORT || 3000, () => {
   console.log('Your app is listening on port ' + listener.address().port);
 });
